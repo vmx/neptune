@@ -125,17 +125,26 @@ where
 
     fn hash(&mut self, preimages: &[GenericArray<F, A>]) -> Result<Vec<F>, Error>;
 
+    // TODO vmx 2023-04-17: add `hash_in_place` method that overrides the preimage slice.
     fn hash_into_slice(
         &mut self,
         target_slice: &mut [F],
         preimages: &[GenericArray<F, A>],
-    ) -> Result<(), Error> {
-        assert_eq!(target_slice.len(), preimages.len());
-        // FIXME: Account for max batch size.
-
-        target_slice.copy_from_slice(self.hash(preimages)?.as_slice());
-        Ok(())
-    }
+    ) -> Result<(), Error>;
+//    ) -> Result<(), Error> {
+//        assert_eq!(target_slice.len(), preimages.len());
+//        // FIXME: Account for max batch size.
+//
+//        //target_slice.copy_from_slice(self.hash(preimages)?.as_slice());
+//log::trace!("vmx: neptune: batch hasher: hash");
+//        let hash = self.hash(preimages)?;
+//log::trace!("vmx: neptune: batch hasher: slice");
+//        let slice = hash.as_slice();
+//log::trace!("vmx: neptune: batch hasher: copy data");
+//        target_slice.copy_from_slice(slice);
+//log::trace!("vmx: neptune: batch hasher: hash_into_slice: done");
+//        Ok(())
+//    }
 
     /// `max_batch_size` is advisory. Implenters of `BatchHasher` should ensure that up to the returned max hashes can
     /// be safely performed on the target GPU (currently 2080Ti). The max returned should represent a safe batch size

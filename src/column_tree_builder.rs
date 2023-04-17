@@ -161,20 +161,30 @@ mod tests {
 
     #[test]
     fn test_column_tree_builder() {
-        // 16KiB tree has 512 leaves.
-        test_column_tree_builder_aux(None, None, 512, 32);
-        test_column_tree_builder_aux(
-            Some(Batcher::new_cpu(512)),
-            Some(Batcher::new_cpu(512)),
-            512,
-            32,
-        );
+        fil_logger::maybe_init();
 
+        //// 16KiB tree has 512 leaves.
+        //test_column_tree_builder_aux(None, None, 512, 32);
+        //test_column_tree_builder_aux(
+        //    Some(Batcher::new_cpu(512)),
+        //    Some(Batcher::new_cpu(512)),
+        //    512,
+        //    32,
+        //);
+        //
+        //test_column_tree_builder_aux(
+        //    Some(Batcher::pick_gpu(512).unwrap()),
+        //    Some(Batcher::pick_gpu(512).unwrap()),
+        //    512,
+        //    32,
+        //);
+
+        // Try large batch sizes to find bottle necks.
         test_column_tree_builder_aux(
-            Some(Batcher::pick_gpu(512).unwrap()),
-            Some(Batcher::pick_gpu(512).unwrap()),
-            512,
-            32,
+            Some(Batcher::pick_gpu(16777216).unwrap()),
+            Some(Batcher::pick_gpu(16777216).unwrap()),
+            16777216,
+            1,
         );
     }
 

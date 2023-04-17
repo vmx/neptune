@@ -899,6 +899,21 @@ where
             .collect())
     }
 
+    fn hash_into_slice(
+        &mut self,
+        target_slice: &mut [F],
+        preimages: &[GenericArray<F, A>],
+    ) -> Result<(), Error> {
+        assert_eq!(target_slice.len(), preimages.len());
+        // FIXME: Account for max batch size.
+
+        //target_slice.copy_from_slice(self.hash(preimages)?.as_slice());
+        let hash = self.hash(preimages)?;
+        let slice = hash.as_slice();
+        target_slice.copy_from_slice(slice);
+        Ok(())
+    }
+
     fn max_batch_size(&self) -> usize {
         self.max_batch_size
     }

@@ -141,6 +141,7 @@ where
                         let batch_size = (batch_end - batch_start) / arity;
                         let preimages =
                             as_generic_arrays::<TreeArity, F>(&tree_data[batch_start..batch_end]);
+                        // TODO vmx 2023-04-17: Use `batcher.hash_in_place()` once implemented.
                         let hashed = batcher.hash(preimages)?;
 
                         #[allow(clippy::drop_ref)]

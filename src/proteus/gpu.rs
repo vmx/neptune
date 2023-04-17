@@ -180,9 +180,12 @@ where
 
         let closures = program_closures!(|program, _args| -> Result<Vec<F>, Error> {
             let kernel = program.create_kernel(&kernel_name, global_work_size, local_work_size)?;
+log::trace!("vmx: neptune: proteus: batch hasher: hash: create preimage buffer: len: {}", preimages.len());
             let preimages_buffer = program.create_buffer_from_slice(preimages)?;
+log::trace!("vmx: neptune: proteus: batch hasher: hash: create result buffer: num hashes: {}", num_hashes);
             let result_buffer = unsafe { program.create_buffer::<F>(num_hashes)? };
 
+log::trace!("vmx: neptune: proteus: batch hasher: hash: call kernel");
             kernel
                 .arg(&self.constants_buffer)
                 .arg(&preimages_buffer)
@@ -190,13 +193,55 @@ where
                 .arg(&(preimages.len() as i32))
                 .run()?;
 
+log::trace!("vmx: neptune: proteus: batch hasher: hash: alloc result");
             let mut frs = vec![F::zero(); num_hashes];
+log::trace!("vmx: neptune: proteus: batch hasher: hash: copy to result");
             program.read_into_buffer(&result_buffer, &mut frs)?;
-            Ok(frs.to_vec())
+log::trace!("vmx: neptune: proteus: batch hasher: hash: result to vector");
+            Ok(frs)
         });
 
         let results = self.program.run(closures, ())?;
+log::trace!("vmx: neptune: proteus: batch hasher: hash: calc done");
         Ok(results)
+    }
+
+    fn hash_into_slice(&mut self, target_slice: &mut [F], preimages: &[GenericArray<F, A>]) -> Result<(), Error> {
+        use std::any::TypeId;
+        let local_work_size = LOCAL_WORK_SIZE;
+        let max_batch_size = self.max_batch_size;
+        let batch_size = preimages.len();
+        assert!(batch_size <= max_batch_size);
+
+        let global_work_size = calc_global_work_size(batch_size, local_work_size);
+        let num_hashes = preimages.len();
+
+        let kernel_name = self.constants.kernel_name();
+
+        let closures = program_closures!(|program, _args| -> Result<(), Error> {
+            let kernel = program.create_kernel(&kernel_name, global_work_size, local_work_size)?;
+log::trace!("vmx: neptune: proteus: batch hasher: hash into slice: create preimage buffer: len: {}", preimages.len());
+            let preimages_buffer = program.create_buffer_from_slice(preimages)?;
+log::trace!("vmx: neptune: proteus: batch hasher: hash into slice: create result buffer: num hashes: {}", num_hashes);
+            let result_buffer = unsafe { program.create_buffer::<F>(num_hashes)? };
+
+log::trace!("vmx: neptune: proteus: batch hasher: hash into slice: call kernel");
+            kernel
+                .arg(&self.constants_buffer)
+                .arg(&preimages_buffer)
+                .arg(&result_buffer)
+                .arg(&(preimages.len() as i32))
+                .run()?;
+
+log::trace!("vmx: neptune: proteus: batch hasher: hash into slice: copy to result");
+            program.read_into_buffer(&result_buffer, target_slice)?;
+log::trace!("vmx: neptune: proteus: batch hasher: hash into slice: copy to result: done");
+            Ok(())
+        });
+
+        let result = self.program.run(closures, ())?;
+log::trace!("vmx: neptune: proteus: batch hasher: hash into slice: calc done");
+        Ok(result)
     }
 
     fn max_batch_size(&self) -> usize {

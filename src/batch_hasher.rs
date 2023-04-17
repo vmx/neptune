@@ -83,6 +83,18 @@ where
         }
     }
 
+    fn hash_into_slice(
+        &mut self,
+        target_slice: &mut [F],
+        preimages: &[GenericArray<F, A>],
+    ) -> Result<(), Error> {
+        match self {
+            Batcher::Cpu(batcher) => batcher.hash_into_slice(target_slice, preimages),
+            #[cfg(any(feature = "cuda", feature = "opencl"))]
+            Batcher::OpenCl(batcher) => batcher.hash_into_slice(target_slice, preimages),
+        }
+    }
+
     fn max_batch_size(&self) -> usize {
         match self {
             Batcher::Cpu(batcher) => batcher.max_batch_size(),
