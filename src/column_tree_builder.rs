@@ -52,19 +52,19 @@ where
             return Err(Error::Other("too many columns".to_string()));
         }
 
-trace!("vmx: neptune: column tree builder: add_columns: start");
+log::trace!("vmx: neptune: column tree builder: add_columns: start");
         match self.column_batcher {
             Some(ref mut batcher) => {
-trace!("vmx: neptune: column tree builder: use column batcher");
+log::trace!("vmx: neptune: column tree builder: use column batcher");
                 batcher.hash_into_slice(&mut self.data[start..start + column_count], columns)?;
             }
             None => columns.iter().enumerate().for_each(|(i, column)| {
-trace!("vmx: neptune: column tree builder: no column batcher");
+log::trace!("vmx: neptune: column tree builder: no column batcher");
                 self.data[start + i] =
                     Poseidon::new_with_preimage(column, &self.column_constants).hash();
             }),
         };
-trace!("vmx: neptune: column tree builder: add_columns: done");
+log::trace!("vmx: neptune: column tree builder: add_columns: done");
 
         self.fill_index += column_count;
 
